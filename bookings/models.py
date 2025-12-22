@@ -27,7 +27,11 @@ class Booking(models.Model):
         related_name="bookings"
     )
 
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
     scheduled_date = models.DateField()
     scheduled_time = models.TimeField()
 

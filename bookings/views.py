@@ -1,19 +1,31 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+
 from .models import Booking
 from .serializers import BookingSerializer
 from services.models import Service
 
 
+# Consumer: Create booking
 class BookingCreateView(generics.CreateAPIView):
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.role != "consumer":
-            raise PermissionError("Only consumers can book services")
 
-        service = Service.objects.get(id=self.request.data.get("service"))
+        if user.role != "consumer":
+            raise permissions.PermissionDenied(
+                "Only consumers can book services"
+            )
+
+        service = get_object_or_404(
+            Service,
+            id=self.request.data.get("service")
+        )
+
         serializer.save(
             consumer=user,
             provider=service.provider,
@@ -21,22 +33,21 @@ class BookingCreateView(generics.CreateAPIView):
         )
 
 
+# Consumer & Provider: View own bookings
 class MyBookingsView(generics.ListAPIView):
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
+
         if user.role == "consumer":
             return Booking.objects.filter(consumer=user)
+
         return Booking.objects.filter(provider=user)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.shortcuts import get_object_or_404
 
-
+# Update booking status
 class BookingStatusUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -45,7 +56,6 @@ class BookingStatusUpdateView(APIView):
         user = request.user
         new_status = request.data.get("status")
 
-        # allowed statuses
         allowed_statuses = ["accepted", "completed", "cancelled"]
         if new_status not in allowed_statuses:
             return Response(
@@ -55,11 +65,17 @@ class BookingStatusUpdateView(APIView):
 
         # Provider rules
         if user.role == "provider" and booking.provider != user:
-            return Response({"error": "Not your booking"}, status=403)
+            return Response(
+                {"error": "Not your booking"},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         # Consumer rules
         if user.role == "consumer" and booking.consumer != user:
-            return Response({"error": "Not your booking"}, status=403)
+            return Response(
+                {"error": "Not your booking"},
+                status=status.HTTP_403_FORBIDDEN
+            )
 
         booking.status = new_status
         booking.save()
@@ -68,11 +84,3 @@ class BookingStatusUpdateView(APIView):
             {"message": f"Booking marked as {new_status}"},
             status=status.HTTP_200_OK
         )
-from django.urls import path
-from .views import BookingCreateView, MyBookingsView, BookingStatusUpdateView
-
-urlpatterns = [
-    path("", BookingCreateView.as_view(), name="booking-create"),
-    path("my/", MyBookingsView.as_view(), name="my-bookings"),
-    path("<int:booking_id>/status/", BookingStatusUpdateView.as_view(), name="booking-status"),
-]

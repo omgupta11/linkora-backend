@@ -2,24 +2,24 @@
 Django settings for api project.
 """
 
-
-
 import os
 from dotenv import load_dotenv
 from pathlib import Path
 from datetime import timedelta
+from corsheaders.defaults import default_headers
 
-
-load_dotenv()  # load .env file
+# -------------------------------------------------------------
+# BASE CONFIG
+# -------------------------------------------------------------
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-later")
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = ["*"]  # allow everything for development
-
+ALLOWED_HOSTS = ["*"]  # OK for development
 
 # -------------------------------------------------------------
 # INSTALLED APPS
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
 
     # Our apps
     'accounts.apps.AccountsConfig',
@@ -47,11 +48,11 @@ INSTALLED_APPS = [
     'notifications_app',
 ]
 
-
 # -------------------------------------------------------------
-# MIDDLEWARE
+# MIDDLEWARE (ORDER MATTERS)
 # -------------------------------------------------------------
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -61,9 +62,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 ROOT_URLCONF = 'api.urls'
-
 
 # -------------------------------------------------------------
 # TEMPLATES
@@ -83,9 +82,7 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'api.wsgi.application'
-
 
 # -------------------------------------------------------------
 # DATABASE CONFIG (POSTGRES)
@@ -101,17 +98,15 @@ DATABASES = {
     }
 }
 
-
 # -------------------------------------------------------------
 # PASSWORD VALIDATION
 # -------------------------------------------------------------
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',},
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
-
 
 # -------------------------------------------------------------
 # INTERNATIONALIZATION
@@ -121,18 +116,18 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-
 # -------------------------------------------------------------
-# STATIC FILES
+# STATIC & MEDIA FILES
 # -------------------------------------------------------------
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # -------------------------------------------------------------
 # CUSTOM USER MODEL
 # -------------------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
-
 
 # -------------------------------------------------------------
 # DRF & JWT SETTINGS
@@ -149,8 +144,17 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=3),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=10),
+    "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
+# -------------------------------------------------------------
+# CORS SETTINGS (FOR EXPO / WEB / ANDROID)
+# -------------------------------------------------------------
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "authorization",
+]
 
 # -------------------------------------------------------------
 # DEFAULT PRIMARY KEY

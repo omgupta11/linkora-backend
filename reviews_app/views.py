@@ -10,7 +10,9 @@ class ReviewCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        booking = Booking.objects.get(id=self.request.data.get("booking"))
+        booking = Booking.objects.get(
+            id=self.request.data.get("booking")
+        )
         user = self.request.user
 
         if user.role != "consumer":

@@ -3,7 +3,10 @@ from .models import Service
 
 
 class ServiceSerializer(serializers.ModelSerializer):
-    provider_name = serializers.CharField(source="provider.username", read_only=True)
+    provider_name = serializers.CharField(
+        source="provider.username",
+        read_only=True
+    )
 
     class Meta:
         model = Service

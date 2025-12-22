@@ -1,6 +1,7 @@
 from django.db import models
 from bookings.models import Booking
 
+
 class Payment(models.Model):
     booking = models.OneToOneField(
         Booking,

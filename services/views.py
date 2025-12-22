@@ -23,4 +23,7 @@ class ProviderServiceListView(generics.ListAPIView):
 
     def get_queryset(self):
         provider_id = self.kwargs.get("provider_id")
-        return Service.objects.filter(provider_id=provider_id)
+        return Service.objects.filter(
+            provider_id=provider_id,
+            is_active=True
+        )
