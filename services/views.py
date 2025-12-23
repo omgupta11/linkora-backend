@@ -1,24 +1,12 @@
-from math import radians, cos, sin, asin, sqrt
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import ValidationError
+from django.db.models import F
+from django.db.models.functions import Power, Sqrt
 from .models import Service
 from .serializers import ServiceSerializer
 
 
-# 🔢 Haversine distance calculation (KM)
-def haversine(lat1, lon1, lat2, lon2):
-    lon1, lat1, lon2, lat2 = map(
-        radians, [lon1, lat1, lon2, lat2]
-    )
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    c = 2 * asin(sqrt(a))
-    return 6371 * c  # KM
-
-
-# ✅ PROVIDER: Create & list own services
+# Provider: Create & List own services
 class ServiceListCreateView(generics.ListCreateAPIView):
     serializer_class = ServiceSerializer
     permission_classes = [IsAuthenticated]
@@ -30,33 +18,50 @@ class ServiceListCreateView(generics.ListCreateAPIView):
         serializer.save(provider=self.request.user)
 
 
-# ✅ CONSUMER: Radius‑based service listing
-class ServiceRadiusListView(generics.ListAPIView):
+# Consumer: View services by provider
+class ProviderServiceListView(generics.ListAPIView):
     serializer_class = ServiceSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        try:
-            lat = float(self.request.query_params.get("lat"))
-            lng = float(self.request.query_params.get("lng"))
-            radius = float(self.request.query_params.get("radius"))
-        except (TypeError, ValueError):
-            raise ValidationError("lat, lng, radius are required")
-
-        services = Service.objects.filter(
-            is_active=True,
-            lat__isnull=False,
-            lng__isnull=False
+        provider_id = self.kwargs.get("provider_id")
+        return Service.objects.filter(
+            provider_id=provider_id,
+            is_active=True
         )
 
-        result = []
-        for service in services:
-            distance = haversine(
-                lat, lng,
-                float(service.lat),
-                float(service.lng)
-            )
-            if distance <= radius:
-                result.append(service.id)
 
-        return Service.objects.filter(id__in=result)
+# Consumer: Nearby services (radius + filters)
+class NearbyServiceListView(generics.ListAPIView):
+    serializer_class = ServiceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        lat = float(self.request.query_params.get("lat"))
+        lng = float(self.request.query_params.get("lng"))
+        radius = float(self.request.query_params.get("radius"))
+
+        category = self.request.query_params.get("category")
+        min_price = self.request.query_params.get("min_price")
+        max_price = self.request.query_params.get("max_price")
+
+        qs = Service.objects.filter(is_active=True)
+
+        if category:
+            qs = qs.filter(category=category)
+
+        if min_price:
+            qs = qs.filter(price__gte=min_price)
+
+        if max_price:
+            qs = qs.filter(price__lte=max_price)
+
+        # distance formula (simple, fast)
+        qs = qs.annotate(
+            distance=Sqrt(
+                Power(F("provider__provider_profile__business_lat") - lat, 2) +
+                Power(F("provider__provider_profile__business_lng") - lng, 2)
+            ) * 111
+        ).filter(distance__lte=radius).order_by("distance")
+
+        return qs

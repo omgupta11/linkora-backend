@@ -26,13 +26,11 @@ class MeAPIView(APIView):
         user = request.user
         data = UserSerializer(user).data
 
-        # attach profile data
-        if user.role == User.Roles.CONSUMER and hasattr(user, "consumer_profile"):
+        if user.role == User.Roles.CONSUMER:
             data["consumer_profile"] = ConsumerProfileSerializer(
                 user.consumer_profile
             ).data
-
-        elif user.role == User.Roles.PROVIDER and hasattr(user, "provider_profile"):
+        else:
             data["provider_profile"] = ProviderProfileSerializer(
                 user.provider_profile
             ).data
@@ -42,14 +40,11 @@ class MeAPIView(APIView):
     def put(self, request):
         user = request.user
 
-        # update basic user fields
         for field in ("username", "email", "phone", "avatar"):
             if field in request.data:
                 setattr(user, field, request.data[field])
-
         user.save()
 
-        # update profile
         if user.role == User.Roles.CONSUMER:
             serializer = ConsumerProfileSerializer(
                 user.consumer_profile,
@@ -63,11 +58,9 @@ class MeAPIView(APIView):
                 partial=True,
             )
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(UserSerializer(user).data)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(UserSerializer(user).data)
 
 
 class UpdateLocationAPIView(APIView):

@@ -19,7 +19,6 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
     avatar = models.URLField(blank=True, null=True)
 
-    # flags
     is_verified = models.BooleanField(default=False)
     points = models.IntegerField(default=0)
     level = models.CharField(max_length=32, default="Bronze")
@@ -36,20 +35,8 @@ class ConsumerProfile(models.Model):
     )
 
     permanent_address = models.TextField(blank=True)
-
-    current_lat = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True
-    )
-    current_lng = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True
-    )
-
+    current_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    current_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     bio = models.TextField(blank=True)
 
     def __str__(self):
@@ -72,34 +59,16 @@ class ProviderProfile(models.Model):
     working_hours = models.CharField(max_length=255, blank=True)
     about = models.TextField(blank=True)
 
-    # 📍 BUSINESS LOCATION (USED FOR RADIUS SEARCH)
-    business_lat = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True
-    )
-    business_lng = models.DecimalField(
-        max_digits=9,
-        decimal_places=6,
-        null=True,
-        blank=True
-    )
+    business_lat = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    business_lng = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
 
-    average_rating = models.DecimalField(
-        max_digits=3,
-        decimal_places=2,
-        default=0.0
-    )
+    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
     total_reviews = models.IntegerField(default=0)
 
     def __str__(self):
         return f"ProviderProfile: {self.business_name or self.user.username}"
 
 
-# -------------------------------------------------
-# SIGNALS
-# -------------------------------------------------
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if not created:
@@ -107,6 +76,5 @@ def create_user_profile(sender, instance, created, **kwargs):
 
     if instance.role == User.Roles.CONSUMER:
         ConsumerProfile.objects.create(user=instance)
-
     elif instance.role == User.Roles.PROVIDER:
         ProviderProfile.objects.create(user=instance)

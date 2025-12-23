@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 
 from .models import Booking
@@ -8,7 +9,9 @@ from .serializers import BookingSerializer
 from services.models import Service
 
 
+# -------------------------------------------------
 # Consumer: Create booking
+# -------------------------------------------------
 class BookingCreateView(generics.CreateAPIView):
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -26,6 +29,18 @@ class BookingCreateView(generics.CreateAPIView):
             id=self.request.data.get("service")
         )
 
+        # 🔴 SLOT CONFLICT CHECK (THIS IS WHAT YOU ASKED)
+        exists = Booking.objects.filter(
+            service=service,
+            scheduled_date=self.request.data.get("scheduled_date"),
+            scheduled_time=self.request.data.get("scheduled_time"),
+            status__in=["pending", "accepted"]
+        ).exists()
+
+        if exists:
+            raise ValidationError("This slot is already booked")
+
+        # ✅ CREATE BOOKING
         serializer.save(
             consumer=user,
             provider=service.provider,
@@ -33,7 +48,9 @@ class BookingCreateView(generics.CreateAPIView):
         )
 
 
+# -------------------------------------------------
 # Consumer & Provider: View own bookings
+# -------------------------------------------------
 class MyBookingsView(generics.ListAPIView):
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -47,7 +64,9 @@ class MyBookingsView(generics.ListAPIView):
         return Booking.objects.filter(provider=user)
 
 
+# -------------------------------------------------
 # Update booking status
+# -------------------------------------------------
 class BookingStatusUpdateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 

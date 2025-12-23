@@ -9,26 +9,41 @@ class ReviewCreateView(generics.CreateAPIView):
     serializer_class = ReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def perform_create(self, serializer):
-        booking = Booking.objects.get(
-            id=self.request.data.get("booking")
-        )
-        user = self.request.user
+def perform_create(self, serializer):
+    booking = Booking.objects.get(
+        id=self.request.data.get("booking")
+    )
+    user = self.request.user
 
-        if user.role != "consumer":
-            raise ValidationError("Only consumers can leave reviews")
+    if user.role != "consumer":
+        raise ValidationError("Only consumers can leave reviews")
 
-        if booking.consumer != user:
-            raise ValidationError("Not your booking")
+    if booking.consumer != user:
+        raise ValidationError("Not your booking")
 
-        if booking.status != "completed":
-            raise ValidationError("Booking not completed yet")
+    if booking.status != "completed":
+        raise ValidationError("Booking not completed yet")
 
-        if hasattr(booking, "review"):
-            raise ValidationError("Review already exists")
+    if hasattr(booking, "review"):
+        raise ValidationError("Review already exists")
 
-        serializer.save(
-            booking=booking,
-            consumer=user,
-            provider=booking.provider
-        )
+    review = serializer.save(
+        booking=booking,
+        consumer=user,
+        provider=booking.provider
+    )
+
+    # ⭐ UPDATE PROVIDER RATING
+    provider_profile = booking.provider.provider_profile
+    provider_profile.total_reviews += 1
+
+    total_rating = (
+        provider_profile.average_rating * (provider_profile.total_reviews - 1)
+    ) + review.rating
+
+    provider_profile.average_rating = (
+        total_rating / provider_profile.total_reviews
+    )
+
+    provider_profile.save()
+
