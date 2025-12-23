@@ -72,6 +72,20 @@ class ProviderProfile(models.Model):
     working_hours = models.CharField(max_length=255, blank=True)
     about = models.TextField(blank=True)
 
+    # 📍 BUSINESS LOCATION (USED FOR RADIUS SEARCH)
+    business_lat = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+    business_lng = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+
     average_rating = models.DecimalField(
         max_digits=3,
         decimal_places=2,
