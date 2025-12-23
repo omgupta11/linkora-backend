@@ -16,6 +16,20 @@ class Service(models.Model):
     category = models.CharField(max_length=100)
     duration_minutes = models.PositiveIntegerField()
 
+    # 📍 LOCATION (USED FOR RADIUS SEARCH)
+    lat = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+    lng = models.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        null=True,
+        blank=True
+    )
+
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

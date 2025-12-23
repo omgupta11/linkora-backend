@@ -58,7 +58,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         default=User.Roles.CONSUMER
     )
 
-    # optional nested profile payload
     consumer_profile = ConsumerProfileSerializer(required=False)
     provider_profile = ProviderProfileSerializer(required=False)
 
@@ -84,7 +83,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
 
-        # create appropriate profile (safe with signals too)
         if user.role == User.Roles.CONSUMER and consumer_data:
             ConsumerProfile.objects.filter(user=user).update(**consumer_data)
 

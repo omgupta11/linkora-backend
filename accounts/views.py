@@ -26,7 +26,7 @@ class MeAPIView(APIView):
         user = request.user
         data = UserSerializer(user).data
 
-        # attach profile data depending on role
+        # attach profile data
         if user.role == User.Roles.CONSUMER and hasattr(user, "consumer_profile"):
             data["consumer_profile"] = ConsumerProfileSerializer(
                 user.consumer_profile
@@ -68,3 +68,27 @@ class MeAPIView(APIView):
             return Response(UserSerializer(user).data)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateLocationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+
+        if user.role == User.Roles.CONSUMER:
+            serializer = ConsumerProfileSerializer(
+                user.consumer_profile,
+                data=request.data,
+                partial=True,
+            )
+        else:
+            serializer = ProviderProfileSerializer(
+                user.provider_profile,
+                data=request.data,
+                partial=True,
+            )
+
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)

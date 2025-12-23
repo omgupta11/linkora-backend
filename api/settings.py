@@ -88,15 +88,12 @@ WSGI_APPLICATION = 'api.wsgi.application'
 # DATABASE CONFIG (POSTGRES)
 # -------------------------------------------------------------
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv("DB_NAME", "linkora_db"),
-        'USER': os.getenv("DB_USER", "linkora_user"),
-        'PASSWORD': os.getenv("DB_PASS", "password"),
-        'HOST': os.getenv("DB_HOST", "localhost"),
-        'PORT': os.getenv("DB_PORT", "5432"),
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
 
 # -------------------------------------------------------------
 # PASSWORD VALIDATION

@@ -19,10 +19,10 @@ class User(AbstractUser):
     phone = models.CharField(max_length=20, blank=True, null=True)
     avatar = models.URLField(blank=True, null=True)
 
-    # extra flags
+    # flags
     is_verified = models.BooleanField(default=False)
     points = models.IntegerField(default=0)
-    level = models.CharField(max_length=32, blank=True, default="Bronze")
+    level = models.CharField(max_length=32, default="Bronze")
 
     def __str__(self):
         return f"{self.username} ({self.role})"
@@ -34,7 +34,9 @@ class ConsumerProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="consumer_profile"
     )
+
     permanent_address = models.TextField(blank=True)
+
     current_lat = models.DecimalField(
         max_digits=9,
         decimal_places=6,
@@ -47,6 +49,7 @@ class ConsumerProfile(models.Model):
         null=True,
         blank=True
     )
+
     bio = models.TextField(blank=True)
 
     def __str__(self):
@@ -59,6 +62,7 @@ class ProviderProfile(models.Model):
         on_delete=models.CASCADE,
         related_name="provider_profile"
     )
+
     business_name = models.CharField(max_length=255, blank=True)
     business_address = models.TextField(blank=True)
     business_city = models.CharField(max_length=128, blank=True)
@@ -80,12 +84,15 @@ class ProviderProfile(models.Model):
 
 
 # -------------------------------------------------
-# SIGNALS: auto create profile based on role
+# SIGNALS
 # -------------------------------------------------
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    if created:
-        if instance.role == User.Roles.CONSUMER:
-            ConsumerProfile.objects.create(user=instance)
-        elif instance.role == User.Roles.PROVIDER:
-            ProviderProfile.objects.create(user=instance)
+    if not created:
+        return
+
+    if instance.role == User.Roles.CONSUMER:
+        ConsumerProfile.objects.create(user=instance)
+
+    elif instance.role == User.Roles.PROVIDER:
+        ProviderProfile.objects.create(user=instance)

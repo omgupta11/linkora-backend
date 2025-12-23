@@ -19,6 +19,8 @@ class ServiceSerializer(serializers.ModelSerializer):
             "price",
             "category",
             "duration_minutes",
+            "lat",
+            "lng",
             "is_active",
             "created_at",
         ]
