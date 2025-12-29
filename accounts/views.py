@@ -1,87 +1,75 @@
-from django.contrib.auth import get_user_model
-from rest_framework import generics, permissions, status
-from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
-from .serializers import (
-    RegisterSerializer,
-    UserSerializer,
-    ConsumerProfileSerializer,
-    ProviderProfileSerializer,
-)
+from django.contrib.auth import get_user_model
+
+from .models import ConsumerProfile, ProviderProfile
+from .serializers import UserSerializer
 
 User = get_user_model()
 
 
-class RegisterAPIView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
-    permission_classes = [permissions.AllowAny]
+class RegisterAPIView(APIView):
+    def post(self, request):
+        data = request.data
+
+        # ------------------------
+        # CREATE USER
+        # ------------------------
+        user = User.objects.create_user(
+            username=data["email"],
+            email=data["email"],
+            password=data["password"],
+            role=data["role"],
+            phone=data.get("phone"),
+        )
+
+        # ------------------------
+        # CONSUMER PROFILE
+        # ------------------------
+        if user.role == "consumer":
+            ConsumerProfile.objects.create(
+                user=user,
+                full_name=data["full_name"],
+                dob=data.get("dob"),
+                address=data["address"],
+                city=data["city"],
+                state=data["state"],
+                country=data.get("country", "India"),
+                pincode=data["pincode"],
+                profile_image=data.get("profile_image"),
+            )
+
+        # ------------------------
+        # PROVIDER PROFILE
+        # ------------------------
+        if user.role == "provider":
+            ProviderProfile.objects.create(
+                user=user,
+                business_name=data["business_name"],
+                owner_name=data["owner_name"],
+                category=data["category"],
+                address=data["address"],
+                city=data["city"],
+                state=data["state"],
+                country=data.get("country", "India"),
+                pincode=data["pincode"],
+                landmark=data.get("landmark", ""),
+                gst_number=data.get("gst_number", ""),
+                cover_image=data.get("cover_image"),
+            )
+
+        return Response(
+            {"message": "Account created successfully"},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class MeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        user = request.user
-        data = UserSerializer(user).data
-
-        if user.role == User.Roles.CONSUMER:
-            data["consumer_profile"] = ConsumerProfileSerializer(
-                user.consumer_profile
-            ).data
-        else:
-            data["provider_profile"] = ProviderProfileSerializer(
-                user.provider_profile
-            ).data
-
-        return Response(data)
-
-    def put(self, request):
-        user = request.user
-
-        for field in ("username", "email", "phone", "avatar"):
-            if field in request.data:
-                setattr(user, field, request.data[field])
-        user.save()
-
-        if user.role == User.Roles.CONSUMER:
-            serializer = ConsumerProfileSerializer(
-                user.consumer_profile,
-                data=request.data.get("consumer_profile", {}),
-                partial=True,
-            )
-        else:
-            serializer = ProviderProfileSerializer(
-                user.provider_profile,
-                data=request.data.get("provider_profile", {}),
-                partial=True,
-            )
-
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(UserSerializer(user).data)
-
-
-class UpdateLocationAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        user = request.user
-
-        if user.role == User.Roles.CONSUMER:
-            serializer = ConsumerProfileSerializer(
-                user.consumer_profile,
-                data=request.data,
-                partial=True,
-            )
-        else:
-            serializer = ProviderProfileSerializer(
-                user.provider_profile,
-                data=request.data,
-                partial=True,
-            )
-
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer = UserSerializer(request.user)
         return Response(serializer.data)
