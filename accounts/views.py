@@ -1,23 +1,48 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 
 from django.contrib.auth import get_user_model
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import ConsumerProfile, ProviderProfile
 from .serializers import UserSerializer
 
 User = get_user_model()
 
+# -----------------------------
+# JWT LOGIN WITH EMAIL
+# -----------------------------
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = "email"
 
+    def validate(self, attrs):
+        attrs["username"] = attrs.get("email")
+        return super().validate(attrs)
+
+
+class EmailTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
+
+
+# -----------------------------
+# REGISTER
+# -----------------------------
 class RegisterAPIView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         data = request.data
 
-        # ------------------------
-        # CREATE USER
-        # ------------------------
+        if User.objects.filter(email=data["email"]).exists():
+            return Response(
+                {"email": "User already exists"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         user = User.objects.create_user(
             username=data["email"],
             email=data["email"],
@@ -26,9 +51,6 @@ class RegisterAPIView(APIView):
             phone=data.get("phone"),
         )
 
-        # ------------------------
-        # CONSUMER PROFILE
-        # ------------------------
         if user.role == "consumer":
             ConsumerProfile.objects.create(
                 user=user,
@@ -42,9 +64,6 @@ class RegisterAPIView(APIView):
                 profile_image=data.get("profile_image"),
             )
 
-        # ------------------------
-        # PROVIDER PROFILE
-        # ------------------------
         if user.role == "provider":
             ProviderProfile.objects.create(
                 user=user,
@@ -67,6 +86,9 @@ class RegisterAPIView(APIView):
         )
 
 
+# -----------------------------
+# ME
+# -----------------------------
 class MeAPIView(APIView):
     permission_classes = [IsAuthenticated]
 

@@ -25,7 +25,6 @@ ALLOWED_HOSTS = ["*"]  # OK for development only
 # INSTALLED APPS
 # -------------------------------------------------------------
 INSTALLED_APPS = [
-    # Django
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -33,21 +32,16 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    # Third‑party
-    "rest_framework",
-    "rest_framework_simplejwt",
     "corsheaders",
+    "rest_framework",
 
-    # Local apps
-    "accounts.apps.AccountsConfig",
+    "accounts",
     "services",
     "bookings",
-    "forum",
-    "chat",
     "reviews_app",
-    "payments_app",
     "notifications_app",
 ]
+
 
 # -------------------------------------------------------------
 # MIDDLEWARE (ORDER MATTERS)
@@ -57,12 +51,12 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    # CSRF disabled for JWT‑based API
-    # "django.middleware.csrf.CsrfViewMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 
 ROOT_URLCONF = "api.urls"
 
@@ -127,9 +121,6 @@ MEDIA_ROOT = BASE_DIR / "media"
 # -------------------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
 
-# -------------------------------------------------------------
-# DJANGO REST FRAMEWORK
-# -------------------------------------------------------------
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -138,7 +129,6 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
 }
-
 # -------------------------------------------------------------
 # SIMPLE JWT SETTINGS
 # -------------------------------------------------------------
@@ -156,6 +146,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "authorization",
 ]
+
 
 # -------------------------------------------------------------
 # DEFAULT PRIMARY KEY

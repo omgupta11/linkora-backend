@@ -22,7 +22,7 @@ class User(AbstractUser):
         null=True,
     )
 
-    # 🔥 FIX: this was causing NOT NULL crash
+    # IMPORTANT: must have default
     is_verified = models.BooleanField(default=False)
 
     def __str__(self):
@@ -40,11 +40,7 @@ class ConsumerProfile(models.Model):
     )
 
     full_name = models.CharField(max_length=200)
-
-    dob = models.DateField(
-        null=True,
-        blank=True,
-    )
+    dob = models.DateField(null=True, blank=True)
 
     address = models.TextField()
     city = models.CharField(max_length=100)
@@ -76,7 +72,6 @@ class ProviderProfile(models.Model):
 
     business_name = models.CharField(max_length=200)
     owner_name = models.CharField(max_length=200)
-
     category = models.CharField(max_length=100)
 
     address = models.TextField()
@@ -85,15 +80,8 @@ class ProviderProfile(models.Model):
     country = models.CharField(max_length=100, default="India")
     pincode = models.CharField(max_length=10)
 
-    landmark = models.CharField(
-        max_length=200,
-        blank=True,
-    )
-
-    gst_number = models.CharField(
-        max_length=20,
-        blank=True,
-    )
+    landmark = models.CharField(max_length=200, blank=True)
+    gst_number = models.CharField(max_length=20, blank=True)
 
     cover_image = models.ImageField(
         upload_to="providers/",
