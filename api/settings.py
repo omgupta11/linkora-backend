@@ -119,7 +119,14 @@ MEDIA_ROOT = BASE_DIR / "media"
 # -------------------------------------------------------------
 # CUSTOM USER MODEL
 # -------------------------------------------------------------
+# -------------------------------------------------------------
+# CUSTOM USER MODEL
+# -------------------------------------------------------------
 AUTH_USER_MODEL = "accounts.User"
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -129,14 +136,14 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
 }
-# -------------------------------------------------------------
-# SIMPLE JWT SETTINGS
-# -------------------------------------------------------------
+
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=3),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=10),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+
 
 # -------------------------------------------------------------
 # CORS SETTINGS (EXPO / ANDROID / IOS / WEB)

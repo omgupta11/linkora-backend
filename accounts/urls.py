@@ -1,9 +1,8 @@
 from django.urls import path
-from .views import RegisterAPIView, MeAPIView, EmailTokenObtainPairView
+from .views import RegisterAPIView, MeAPIView, EmailTokenView
 
 urlpatterns = [
-    path("register/", RegisterAPIView.as_view(), name="register"),
-    path("me/", MeAPIView.as_view(), name="me"),
-    path("token/", EmailTokenObtainPairView.as_view(), name="token"),
+    path("register/", RegisterAPIView.as_view()),
+    path("me/", MeAPIView.as_view()),
+    path("login/", EmailTokenView.as_view()),  # ✅ ONLY LOGIN ENDPOINT
 ]
-

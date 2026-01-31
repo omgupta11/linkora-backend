@@ -15,15 +15,15 @@ class ProviderProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    consumer_profile = ConsumerProfileSerializer(required=False)
-    provider_profile = ProviderProfileSerializer(required=False)
+    consumer_profile = ConsumerProfileSerializer(read_only=True)
+    provider_profile = ProviderProfileSerializer(read_only=True)
 
     class Meta:
         model = User
         fields = (
             "id",
-            "username",
             "email",
+            "username",
             "role",
             "phone",
             "is_verified",
